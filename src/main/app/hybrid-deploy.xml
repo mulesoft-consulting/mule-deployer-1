@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<sub-flow name="deploy-hybrid-application">
+		<flow-ref name="prepare-hybrid-request" doc:name="Prepare Hybrid Request" />
+		<logger level="INFO" message="#[sessionVars.baseLogger] Deploy Hybrid Application Request: #[payload]" doc:name="Log Request"/>
+		<http:request method="#[flowVars.method]" path="#[flowVars.path]" config-ref="http_request_mule" doc:name="POST/PATCH Deploy Application Call">
+			<http:request-builder>
+				<http:header headerName="Authorization" value="bearer #[sessionVars.token]" />
+				<http:header headerName="X-ANYPNT-ORG-ID" value="#[sessionVars.orgId]" />
+				<http:header headerName="X-ANYPNT-ENV-ID" value="#[sessionVars.envId]" />
+				<http:header headerName="Content-Type" value="multipart/form-data" />
+			</http:request-builder>
+		</http:request>
+		<object-to-string-transformer doc:name="Convert to String"/>
+		<logger level="INFO" message="#[sessionVars.baseLogger] Deploy Hybrid Application Response: #[payload]" doc:name="Log Response"/>
+	</sub-flow>
+	
+	<sub-flow name="prepare-hybrid-request">
+		<flow-ref name="get-access-token" doc:name="Get Access Token"/>
+		<flow-ref name="get-environment" doc:name="Get Environment"/>
+		<flow-ref name="get-target" doc:name="Get Target"/>
+		<set-session-variable variableName="targetId" value="#[flowVars.dataId]" doc:name="Set Target Id" />
+		<flow-ref name="get-hybrid-application" doc:name="Get Application" />
+		<transformer ref="hybrid_file_attachment" doc:name="Attach Multipart/Form-Data" />
+				
+		<choice>
+			<when expression="#[flowVars.application != null]">
+				<logger level="INFO" message="#[sessionVars.baseLogger] Application found: calling PATCH" doc:name="Update" />
+				<set-variable variableName="path" value="/hybrid/api/v1/applications/#[flowVars.application]" doc:name="Set PATCH Path"/>
+				<set-variable variableName="method" value="PATCH" doc:name="Set Method" />
+			</when>
+			<otherwise>
+				<logger level="INFO" message="#[sessionVars.baseLogger] Application not found: calling POST" doc:name="Create" />
+				<set-variable variableName="path" value="/hybrid/api/v1/applications" doc:name="Set POST Path"/>
+				<set-variable variableName="method" value="POST" doc:name="Set Method" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	
+	<sub-flow name="get-target">
+		<choice doc:name="Set Target Type">
+			<when expression="#[sessionVars.targetType == 'SERVER']">
+				<flow-ref name="get-hybrid-servers" doc:name="Get Hybrid Servers"/>
+			</when>
+			<when expression="#[sessionVars.targetType == 'CLUSTER']">
+				<flow-ref name="get-hybrid-clusters" doc:name="Get Hybrid Clusters"/>
+			</when>
+			<when expression="#[sessionVars.targetType == 'GROUP']">
+				<flow-ref name="get-hybrid-groups" doc:name="Get Hybrid Server Groups"/>
+			</when>
+			<otherwise>
+				<logger level="WARN" message="Target specified as #[sessionVars.targetType]" doc:name="No Target Specified"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+
+</mule>

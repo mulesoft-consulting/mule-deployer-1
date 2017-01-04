@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:secure-property-placeholder="http://www.mulesoft.org/schema/mule/secure-property-placeholder" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-property-placeholder http://www.mulesoft.org/schema/mule/secure-property-placeholder/current/mule-secure-property-placeholder.xsd">
+	<secure-property-placeholder:config name="Secure_Property_Placeholder"
+		key="${encryptionkey}" location="api.properties"
+      	encryptionAlgorithm="AES"/>
+      	
+    <configuration defaultExceptionStrategy-ref="exception-handler">
+		<expression-language autoResolveVariables="false">
+			<import class="org.apache.commons.lang3.StringEscapeUtils"/>
+			<import class="org.apache.commons.io.FilenameUtils"/>
+		</expression-language>
+	</configuration>
+    
+
+	<http:listener-config name="http_listener" host="0.0.0.0" port="${http.port}" connectionIdleTimeout="${http.timeout}" doc:name="HTTP Listener Configuration"/>
+	<http:request-config name="http_request_mule" host="anypoint.mulesoft.com" port="443" protocol="HTTPS" doc:name="HTTP Request Configuration"/>
+	
+	<custom-transformer name="cloud_file_attachment" class="com.deic.transformers.CloudAttachmentTransformer" doc:name="Java"/>
+	<custom-transformer name="hybrid_file_attachment" class="com.deic.transformers.HybridAttachmentTransformer" doc:name="Java"/>
+	
+	<sub-flow name="set-base-logger">
+		<set-session-variable variableName="baseLogger" value="correlationId=&quot;#[sessionVars.correlationId]&quot; application=&quot;#[app.name]&quot; muleMessageId=&quot;#[message.id]&quot;" doc:name="Set Base Logger"/>
+	</sub-flow>
+	
+	<sub-flow name="get-data-id">
+		<enricher target="#[flowVars.map]" doc:name="Set Flow Variable">
+			<json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="Convert to Map Object" />
+		</enricher>
+		<foreach collection="#[flowVars.map.data]" doc:name="Iterate through Data Elements">
+			<choice>
+				<when expression="#[flowVars.name == payload.name]">
+					<set-variable variableName="dataId" value="#[payload.id]" doc:name="Set Data ID" />
+				</when>
+				<otherwise>
+					<logger level="WARN" message="#[sessionVars.baseLogger] Data does not match #[payload.name]." doc:name="No Match" />
+				</otherwise>
+			</choice>
+		</foreach>
+	</sub-flow>
+    
+</mule>

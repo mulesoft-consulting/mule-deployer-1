@@ -1,0 +1,6 @@
+{
+  "targetType": "CLUSTER",
+  "targetName": "my-cluster",
+  "artifactId": "my-app",
+  "file": "http://myjenkinsurl/myapp"
+}

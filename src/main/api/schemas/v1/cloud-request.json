@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string"
+    },
+    "workers": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "string"
+        },
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "name",
+        "weight",
+        "cpu",
+        "memory"
+      ]
+    },
+    "properties": {
+      "type": "object",
+      "properties": {
+        
+      }
+    }
+  },
+  "required": [
+    "file",
+    "workers"
+  ]
+}

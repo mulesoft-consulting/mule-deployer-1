@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.8.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<sub-flow name="get-access-token">
+		<flow-ref name="get-access-token-response" doc:name="Get Access Token Response" />
+		<flow-ref name="set-access-token" doc:name="Set Access Token in Session" />
+	</sub-flow>
+	
+	<sub-flow name="get-access-token-response">
+		<logger level="INFO" message="#[sessionVars.baseLogger] Get Access Token Request: #[payload]" doc:name="Log Request"/>
+		<set-payload value="{&quot;username&quot;: &quot;${mule.username}&quot;,&quot;password&quot;: &quot;${mule.password}&quot;}" doc:name="Set Request Payload" />
+		<http:request method="POST" config-ref="http_request_mule" path="/accounts/login" doc:name="POST Access Token Call">
+			<http:request-builder>
+				<http:header headerName="Content-Type" value="application/json"/>
+			</http:request-builder>
+		</http:request>
+		<object-to-string-transformer doc:name="Convert to String" />
+		<logger level="INFO" message="#[sessionVars.baseLogger] Get Access Token Response: #[payload]" doc:name="Log Response"/>
+	</sub-flow>
+	
+	<sub-flow name="set-access-token">
+		<enricher target="#[sessionVars.token]" doc:name="Set in Session">
+			<processor-chain>
+				<json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="Convert to Map Object" />
+				<set-payload value="#[payload.'access_token']" doc:name="Set Access Token" />
+			</processor-chain>
+		</enricher>
+	</sub-flow>
+
+</mule>

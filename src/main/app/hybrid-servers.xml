@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.8.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<sub-flow name="get-hybrid-servers">
+		<flow-ref name="get-hybrid-servers-response" doc:name="Get Hybrid Servers Response" />
+		<set-variable variableName="name" value="#[sessionVars.targetName]" doc:name="Set Target Name" />
+		<flow-ref name="get-data-id" doc:name="Get Data ID" />
+	</sub-flow>
+	
+	<sub-flow name="get-hybrid-servers-response">
+		<flow-ref name="get-access-token" doc:name="Get Access Token" />
+		<flow-ref name="get-environment" doc:name="Get Environment" />
+		<http:request method="GET" config-ref="http_request_mule" path="/hybrid/api/v1/servers" doc:name="GET Hybrid Servers Call">
+			<http:request-builder>
+				<http:header headerName="Authorization" value="bearer #[sessionVars.token]" />
+				<http:header headerName="X-ANYPNT-ORG-ID" value="#[sessionVars.orgId]" />
+				<http:header headerName="X-ANYPNT-ENV-ID" value="#[sessionVars.envId]" />
+			</http:request-builder>
+		</http:request>
+		<object-to-string-transformer doc:name="Convert to String" />
+	</sub-flow>
+	
+</mule>

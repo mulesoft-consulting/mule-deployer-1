@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.8.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<sub-flow name="get-cloud-application">
+		<flow-ref name="get-cloud-applications-response" doc:name="Get Attachment Response" />
+		<flow-ref name="set-cloud-application" doc:name="Set Application" />
+	</sub-flow>
+	
+	<sub-flow name="get-cloud-applications-response">
+		<flow-ref name="get-access-token" doc:name="Get Access Token" />
+		<flow-ref name="get-environment" doc:name="Get Environment" />
+		<logger level="INFO" message="#[sessionVars.baseLogger] Get Applications Request: #[payload]" doc:name="Log Request"/>
+		<http:request method="GET" config-ref="http_request_mule" path="/cloudhub/api/applications" doc:name="GET Hybrid Clusters Call">
+			<http:request-builder>
+				<http:header headerName="Authorization" value="bearer #[sessionVars.token]" />
+				<http:header headerName="X-ANYPNT-ENV-ID" value="#[sessionVars.envId]" />
+			</http:request-builder>
+		</http:request>
+		<object-to-string-transformer doc:name="Convert to String" />
+		<logger level="INFO" message="#[sessionVars.baseLogger] Get Applications Response: #[payload]" doc:name="Log Response"/>
+	</sub-flow>
+	
+	<sub-flow name="set-cloud-application">
+		<enricher target="#[flowVars.cloudAppResults]" doc:name="Set Payload as Map">
+			<json:json-to-object-transformer returnClass="java.util.List" doc:name="Convert to Map Object" />
+		</enricher>
+		<foreach collection="#[flowVars.cloudAppResults]" doc:name="Iterate through Data Elements">
+			<choice>
+				<when expression="#[sessionVars.filename == payload.filename]">
+					<set-variable variableName="application" value="#[payload.id]" doc:name="Set Application ID" />
+				</when>
+				<otherwise>
+					<logger level="WARN" message="#[sessionVars.baseLogger] Data does not match #[sessionVars.filename]." doc:name="No Match" />
+				</otherwise>
+			</choice>
+		</foreach>
+	</sub-flow>
+
+</mule>

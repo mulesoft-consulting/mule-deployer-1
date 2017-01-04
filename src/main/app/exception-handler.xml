@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<catch-exception-strategy name="exception-handler">
+		<set-variable variableName="exception-message" value="#[exception]:#[exception.cause == null ? exception.message : exception.cause.message]" doc:name="Set Exception Message" />
+		<set-variable variableName="exception-message" value="#[StringEscapeUtils.escapeJava(flowVars['exception-message'])]" doc:name="Escape Quotes" />
+		
+		<choice doc:name="Choice">
+    		<when expression="#[exception.causedBy(java.net.UnknownHostException) 
+    							|| exception.causedBy(java.net.SocketTimeoutException) 
+    							|| exception.causedBy(sun.security.provider.certpath.SunCertPathBuilderException)
+    							|| exception.causedBy(java.util.concurrent.TimeoutException)
+    							|| exception.causedBy(java.nio.channels.UnresolvedAddressException)
+    							|| exception.causedBy(java.net.ConnectException)]">
+    			<set-property propertyName="http.status" value="504" doc:name="Set HTTP Status"/>
+    			<set-variable variableName="code" value="CONNECTION_ERROR" doc:name="Set Code"/>
+    		</when>
+    		<when expression="#[exception.causedBy(org.mule.module.apikit.exception.BadRequestException)]">
+    			<set-property propertyName="http.status" value="400" doc:name="Set HTTP Status"/>
+    			<set-variable variableName="code" value="REQUEST_ERROR" doc:name="Set Code"/>
+    		</when>
+    		<when expression="#[exception.causedBy(org.mule.module.apikit.exception.NotFoundException)]">
+    			<set-property propertyName="http.status" value="404" doc:name="Set HTTP Status"/>
+    			<set-variable variableName="code" value="REQUEST_ERROR" doc:name="Set Code"/>
+    		</when>
+    		<when expression="#[exception.causedBy(org.mule.module.apikit.exception.MethodNotAllowedException)]">
+    			<set-property propertyName="http.status" value="405" doc:name="Set HTTP Status"/>
+    			<set-variable variableName="code" value="REQUEST_ERROR" doc:name="Set Code"/>
+    		</when>
+    		<when expression="#[exception.causedBy(org.mule.module.apikit.exception.NotAcceptableException)]">
+    			<set-property propertyName="http.status" value="406" doc:name="Set HTTP Status"/>
+    			<set-variable variableName="code" value="REQUEST_ERROR" doc:name="Set Code"/>
+    		</when>
+    		<when expression="#[exception.causedBy(org.mule.module.apikit.exception.UnsupportedMediaTypeException)]">
+    			<set-property propertyName="http.status" value="415" doc:name="Set HTTP Status"/>
+    			<set-variable variableName="code" value="REQUEST_ERROR" doc:name="Set Code"/>
+    		</when>
+    		<otherwise>
+    			<set-property propertyName="http.status" value="500" doc:name="Set HTTP Status"/>
+    			<set-variable variableName="code" value="SERVER_ERROR" doc:name="Set Code"/>
+    		</otherwise>
+    	</choice>
+    	
+		<logger level="ERROR" message="#[sessionVars.baseLogger] code=&quot;#[flowVars.code]&quot; error=&quot;#[flowVars.'exception-message']&quot;" doc:name="Log Error"/>
+    	<logger level="ERROR" message="#[message.payloadAs(java.lang.String)]" doc:name="Log Error Payload"/>
+    	<set-property propertyName="Content-Type" value="application/json" doc:name="Set Content Type" />
+    	<set-payload value="{&quot;error&quot;:&quot;#[flowVars.code]&quot;,&quot;message&quot;:&quot;#[flowVars.'exception-message']&quot;,&quot;response&quot;:#[payload != null ? message.payloadAs(java.lang.String) : null]}" doc:name="Set Payload"/>
+	</catch-exception-strategy>
+
+</mule>

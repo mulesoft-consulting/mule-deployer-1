@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.8.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<sub-flow name="get-environment">
+		<flow-ref name="get-environment-response" doc:name="Get Environment Response" />
+		<set-variable variableName="name" value="#[sessionVars.env]" doc:name="Set Environment Name" />
+		<flow-ref name="get-data-id" doc:name="Get Data ID" />
+		<set-session-variable variableName="envId" value="#[flowVars.dataId]" doc:name="Set Environment ID" />
+	</sub-flow>
+	
+	<sub-flow name="get-environment-response">
+		<flow-ref name="get-organization" doc:name="Get Organization" />
+		<logger level="INFO" message="#[sessionVars.baseLogger] Get Environment Request: #[payload]" doc:name="Log Request"/>
+		<http:request method="GET" config-ref="http_request_mule" path="/accounts/api/organizations/#[sessionVars.orgId]/environments" doc:name="GET Environment Call">
+			<http:request-builder>
+				<http:header headerName="Authorization" value="bearer #[sessionVars.token]" />
+			</http:request-builder>
+		</http:request>
+		<object-to-string-transformer doc:name="Convert to String" />
+		<logger level="INFO" message="#[sessionVars.baseLogger] Get Environment Response: #[payload]" doc:name="Log Response"/>
+	</sub-flow>
+
+</mule>

@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "targetType": {
+      "enum": ["SERVER","CLUSTER","GROUP"]
+    },
+    "targetName": {
+      "type": "string"
+    },
+    "artifactId": {
+      "type": "string"
+    },
+    "file": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "targetType",
+    "targetName",
+    "artifactId",
+    "file"
+  ]
+}

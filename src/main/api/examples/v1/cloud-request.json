@@ -1,0 +1,14 @@
+{
+  "file": "http://myjenkinsurl/myapp",
+  "workers": {
+    "amount": "1",
+    "name": "Medium",
+    "weight": "0.1",
+    "cpu": "0.1 vCores",
+    "memory": "500 MB memory"
+  },
+  "properties" : {
+  	"key1": "value1",
+  	"key2": "value2"
+  }
+}

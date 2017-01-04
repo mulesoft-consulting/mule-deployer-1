@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.8.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<sub-flow name="get-organization">
+		<flow-ref name="get-organization-response" doc:name="Get Organization Response" />
+		<flow-ref name="set-organization" doc:name="Set Organization" />
+	</sub-flow>
+	
+	<sub-flow name="get-organization-response">
+		<logger level="INFO" message="#[sessionVars.baseLogger] Get Organization Request: #[payload]" doc:name="Log Request"/>
+		<http:request method="GET" config-ref="http_request_mule" path="/accounts/api/me" doc:name="GET Organization Call">
+			<http:request-builder>
+				<http:header headerName="Authorization" value="bearer #[sessionVars.token]" />
+			</http:request-builder>
+		</http:request>
+		<object-to-string-transformer doc:name="Convert to String" />
+		<logger level="INFO" message="#[sessionVars.baseLogger] Get Organization Response: #[payload]" doc:name="Log Response"/>
+	</sub-flow>
+	
+	<sub-flow name="set-organization">
+		<enricher target="#[variable:orgMap]" doc:name="Set Organization Map">
+			<json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="Convert to Map Object" />
+		</enricher>
+		<set-session-variable variableName="orgId" value="#[flowVars.orgMap.user.organization.id]" doc:name="Set Organization ID" />
+		<set-session-variable variableName="domain" value="#[flowVars.orgMap.user.organization.domain]" doc:name="Set Domain" />
+	</sub-flow>
+
+</mule>

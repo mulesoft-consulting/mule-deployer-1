@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:context="http://www.springframework.org/schema/context" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+        
+    <flow name="get:/applications/cloud/v1:devops-config">
+        <logger level="INFO" message="#[sessionVars.baseLogger] Request: #[payload]" doc:name="Log Request"/>
+        <set-session-variable variableName="env" value="#[message.inboundProperties.'http.query.params'.env]" doc:name="Set Environment Name" />
+        <flow-ref name="get-cloud-applications-response" doc:name="Get Cloud Applications Response"/>
+        <set-property propertyName="Content-Type" value="application/json" doc:name="Set Content Type" />
+        <logger level="INFO" message="#[sessionVars.baseLogger] Response: #[payload]" doc:name="Log Response"/>
+        <exception-strategy ref="exception-handler" doc:name="Reference Exception Strategy"/>
+    </flow>
+    
+    <flow name="post:/deploy/cloud/v1:devops-config">
+    	<enricher target="#[variable:payloadMap]" doc:name="Set Payload as Map">
+    		<processor-chain doc:name="Processor Chain">
+    			<object-to-string-transformer doc:name="Convert Payload to String"/>
+                <json:json-to-object-transformer returnClass="java.util.Map" doc:name="Convert to Map"/>
+    		</processor-chain>
+    	</enricher>
+    	
+        <logger level="INFO" message="#[sessionVars.baseLogger] Request: #[payload]" doc:name="Log Request"/>
+        <set-session-variable variableName="env" value="#[message.inboundProperties.'http.query.params'.env]" doc:name="Set Environment Name" />
+        <set-session-variable variableName="file" value="#[flowVars.payloadMap.file]" doc:name="Set File" />
+        <set-session-variable variableName="filename" value="#[FilenameUtils.getName(sessionVars.file)]" doc:name="Set Filename" />
+        <set-session-variable variableName="workersAmount" value="#[flowVars.payloadMap.workers.amount]" doc:name="Set Workers Amount" />
+        <set-session-variable variableName="workersName" value="#[flowVars.payloadMap.workers.name]" doc:name="Set Workers Name" />
+        <set-session-variable variableName="workersWeight" value="#[flowVars.payloadMap.workers.weight]" doc:name="Set Workers Weight" />
+        <set-session-variable variableName="workersCpu" value="#[flowVars.payloadMap.workers.cpu]" doc:name="Set Workers CPU" />
+        <set-session-variable variableName="workersMemory" value="#[flowVars.payloadMap.workers.memory]" doc:name="Set Workers Memory" />
+        
+        <enricher target="#[sessionVars.properties]" doc:name="Set Properties">
+        	<processor-chain doc:name="Processor Chain">
+        		<choice>
+        			<when expression="#[flowVars.payloadMap.properties != null]">
+        				<set-payload value="#[flowVars.payloadMap.properties]" doc:name="Set Payload To Convert"/>
+                		<json:object-to-json-transformer doc:name="Convert to JSON"/>
+        			</when>
+        			<otherwise>
+        				<set-payload value="#[null]" />
+        			</otherwise>
+        		</choice>
+        	</processor-chain>
+        </enricher>
+                
+        <flow-ref name="deploy-cloud-application" doc:name="Deploy Cloud Application"/>
+        <set-property propertyName="Content-Type" value="application/json" doc:name="Set Content Type" />
+        <logger level="INFO" message="#[sessionVars.baseLogger] Response: #[payload]" doc:name="Log Response"/>
+        <exception-strategy ref="exception-handler" doc:name="Reference Exception Strategy"/>
+    </flow>
+    
+</mule>

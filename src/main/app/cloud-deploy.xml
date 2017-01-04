@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.8.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+	<sub-flow name="deploy-cloud-application">
+		<flow-ref name="prepare-cloud-request" doc:name="Prepare Cloud Request" />
+		<logger level="INFO" message="#[sessionVars.baseLogger] Deploy Cloud Application Request: #[payload]" doc:name="Deploy Cloud Application Request"/>	
+		<http:request method="#[flowVars.method]" path="#[flowVars.path]" config-ref="http_request_mule" doc:name="Deploy Application Call">
+			<http:request-builder>
+				<http:header headerName="Authorization" value="bearer #[sessionVars.token]" />
+				<http:header headerName="X-ANYPNT-ENV-ID" value="#[sessionVars.envId]" />
+				<http:header headerName="Content-Type" value="multipart/form-data" />
+			</http:request-builder>
+		</http:request>
+		<object-to-string-transformer doc:name="Convert to String"/>
+		<logger level="INFO" message="#[sessionVars.baseLogger] Deploy Cloud Application Response: #[payload]" doc:name="Deploy Cloud Application Response"/>
+	</sub-flow>
+	
+	<sub-flow name="prepare-cloud-request">
+		<flow-ref name="get-access-token" doc:name="Get Access Token"/>
+		<flow-ref name="get-environment" doc:name="Get Environment"/>	
+		<set-variable variableName="autoStart" value="${deploy.autostart}" doc:name="Set autoStart" />	
+		<flow-ref name="get-cloud-application" doc:name="Get Application" />
+		
+		<choice>
+			<when expression="#[flowVars.application != null]">
+				<logger level="INFO" message="#[sessionVars.baseLogger] Application found: calling PATCH" doc:name="Update" />
+				<set-variable variableName="path" value="/cloudhub/api/v2/applications/#[sessionVars.domain]" doc:name="Set PATCH Path"/>
+				<set-variable variableName="method" value="PUT" doc:name="Set Method" />
+				<set-variable variableName="appInfoJson" value="{&quot;fileChecksum&quot;: &quot;&quot;,&quot;fileSource&quot;: &quot;&quot;,&quot;muleVersion&quot;: {&quot;version&quot;: &quot;${mule.version}&quot;,&quot;updateId&quot;: &quot;#[flowVars.application]&quot;},&quot;properties&quot;: #[sessionVars.properties != null? sessionVars.properties : &quot;{}&quot;],&quot;logLevels&quot;: [],&quot;trackingSettings&quot;: {&quot;trackingLevel&quot;: &quot;${deploy.trackingLevel}&quot;},&quot;region&quot;: &quot;${deploy.region}&quot;,&quot;multitenanted&quot;: ${deploy.multitenanted},&quot;vpnEnabled&quot;: ${deploy.vpnEnabled},&quot;secureDataGatewayEnabled&quot;: ${deploy.secureDataGatewayEnabled},&quot;persistentQueues&quot;: ${deploy.persistentQueues},&quot;persistentQueuesEncrypted&quot;: ${deploy.persistentQueuesEncrypted},&quot;monitoringEnabled&quot;: ${deploy.monitoringEnabled},&quot;monitoringAutoRestart&quot;: ${deploy.monitoringAutoRestart},&quot;workers&quot;: {&quot;type&quot;: {&quot;name&quot;: &quot;#[sessionVars.workersName]&quot;,&quot;weight&quot;: #[sessionVars.workersWeight],&quot;cpu&quot;: &quot;#[sessionVars.workersCpu]&quot;,&quot;memory&quot;: &quot;#[sessionVars.workersMemory]&quot;},&quot;amount&quot;: #[sessionVars.workersAmount]}}" doc:name="Set appInfoJson" />
+			</when>
+			<otherwise>
+				<logger level="INFO" message="#[sessionVars.baseLogger] Application not found: calling POST" doc:name="Create" />
+				<set-variable variableName="path" value="/cloudhub/api/v2/applications" doc:name="Set POST Path"/>
+				<set-variable variableName="method" value="POST" doc:name="Set Method" />
+				<set-variable variableName="appInfoJson" value="{ &quot;domain&quot;: &quot;#[sessionVars.domain]&quot;, &quot;muleVersion&quot;: { &quot;version&quot;: &quot;${mule.version}&quot; }, &quot;properties&quot;: #[sessionVars.properties != null? sessionVars.properties : &quot;{}&quot;], &quot;region&quot;: &quot;${deploy.region}&quot;, &quot;monitoringEnabled&quot;: ${deploy.monitoringEnabled}, &quot;monitoringAutoRestart&quot;: ${deploy.monitoringAutoRestart}, &quot;workers&quot;: { &quot;amount&quot;: #[sessionVars.workersAmount], &quot;type&quot;: { &quot;name&quot;: &quot;#[sessionVars.workersName]&quot;, &quot;weight&quot;: #[sessionVars.workersWeight], &quot;cpu&quot;: &quot;#[sessionVars.workersCpu]&quot;, &quot;memory&quot;: &quot;#[sessionVars.workersMemory]&quot; } }, &quot;loggingNgEnabled&quot;: ${deploy.loggingNgEnabled}, &quot;persistentQueues&quot;: ${deploy.persistentQueues} }" doc:name="Set appInfoJson" />
+			</otherwise>
+		</choice>
+		
+		<transformer ref="cloud_file_attachment" doc:name="Attach File" />
+	</sub-flow>
+	
+</mule>

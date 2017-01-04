@@ -1,0 +1,110 @@
+#%RAML 0.8
+title: Devops API
+version: 1.0
+documentation:
+- title: Devops API
+  content: Deplyment Tools.
+baseUri: https://0.0.0.0:8081/api/devops
+mediaType: application/json
+
+/servers/hybrid/v1:
+  get:
+    queryParameters: 
+      env:
+        type: string
+        required: true
+    responses:
+      200:
+        description: Successful response sent.
+        body:
+          application/json: 
+      500:
+        description: Internal service error.
+        
+/clusters/hybrid/v1:
+  get:
+    queryParameters: 
+      env:
+        type: string
+        required: true
+    responses:
+      200:
+        description: Successful response sent.
+        body:
+          application/json: 
+      500:
+        description: Internal service error.
+        
+/serverGroups/hybrid/v1:
+  get:
+    queryParameters: 
+      env:
+        type: string
+        required: true
+    responses:
+      200:
+        description: Successful response sent.
+        body:
+          application/json: 
+      500:
+        description: Internal service error.
+
+/applications/hybrid/v1:
+  get:
+    queryParameters: 
+      env:
+        type: string
+        required: true
+    responses:
+      200:
+        description: Successful response sent.
+        body:
+          application/json: 
+      500:
+        description: Internal service error.
+        
+/applications/cloud/v1:
+  get:
+    responses:
+      200:
+        description: Successful response sent.
+        body:
+          application/json: 
+      500:
+        description: Internal service error.
+
+/deploy/cloud/v1:
+  post:
+    queryParameters: 
+      env:
+        type: string
+        required: true
+    body:
+      application/json: 
+        schema: !include schemas/v1/cloud-request.json
+        example: !include examples/v1/cloud-request.json
+    responses:
+      200:
+        description: Successful response sent.
+        body:
+          application/json: 
+      500:
+        description: Internal service error.
+
+/deploy/hybrid/v1:
+  post:
+    queryParameters: 
+      env:
+        type: string
+        required: true
+    body: 
+      application/json: 
+        schema: !include schemas/v1/hybrid-request.json
+        example: !include examples/v1/hybrid-request.json
+    responses:
+      200:
+        description: Successful response sent.
+        body:
+          application/json: 
+      500:
+        description: Internal service error.
