@@ -53,6 +53,8 @@ curl -i -X POST \
     "encryptionkey" : "1234567890123456"
   }
 }' \
- 'http://localhost:8081/api/devops/deploy/cloud/v1?env=DEV'        
-      
- To send us feeback you can contact us at feedback@diamondedgeconsulting.com
+ 'http://localhost:8081/api/devops/deploy/cloud/v1?env=DEV'     
+    
+ To send us feeback you can contact us at feedback@diamondedgeconsulting.com    
+ www.diamondedgeconsulting.com     
+ Follow us @diamondedgeIT    
