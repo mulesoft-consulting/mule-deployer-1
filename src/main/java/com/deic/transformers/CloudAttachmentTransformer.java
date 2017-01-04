@@ -15,7 +15,6 @@ import com.deic.AttachmentHelper;
  * 
  * @author Diamond Edge IT Consulting Inc.
  * @version 1.0
- * © 2016 Diamond Edge IT Consulting Inc.  All Rights Reserved.
  */
 public class CloudAttachmentTransformer extends AbstractMessageTransformer {
 
