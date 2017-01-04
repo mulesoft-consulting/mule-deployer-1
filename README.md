@@ -33,7 +33,8 @@ To deploy a cloudhub application it will do the following steps;
 6. If the file is on the file system it will read the bytes from the file system and attach them      
 7. Check if the application is deployed      
 8. If the application is not deployed it will deploy a new application      
-9. If the application is deployed it will update the existing application          
+9. If the application is deployed it will update the existing application      
+      
 _Please note that due to access restrictions the cloudhub deployment could not be properly tested.  Any feedback/ or potential contributors to make this complete are welcome._     
 ## Cloud POST Example     
 curl -i -X POST \
