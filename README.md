@@ -35,7 +35,7 @@ To deploy a cloudhub application it will do the following steps;
 8. If the application is not deployed it will deploy a new application      
 9. If the application is deployed it will update the existing application      
       
-_Please note that due to access restrictions the cloudhub deployment could not be properly tested.  Any feedback/ or potential contributors to make this complete are welcome._     
+_Please note that due to access restrictions the cloudhub deployment could not be properly tested.  Any feedback/ or potential contributors are welcome._     
 ## Cloud POST Example     
 curl -i -X POST \
    -H "Content-Type:application/json" \
