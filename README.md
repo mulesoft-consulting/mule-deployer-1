@@ -55,6 +55,6 @@ curl -i -X POST \
 }' \
  'http://localhost:8081/api/devops/deploy/cloud/v1?env=DEV'     
     
- To send us feeback you can contact us at feedback@diamondedgeconsulting.com    
- www.diamondedgeconsulting.com     
+ To send us feeback you can contact us at feedback@diamondedge-it.com    
+ www.diamondedge-it.com     
  Follow us @diamondedgeIT    
